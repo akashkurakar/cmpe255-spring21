@@ -1,0 +1,9 @@
+$11914 lines loaded
+              engine_fuel_type  engine_hp  ...     msrp     msrp_pred
+0  premium_unleaded_(required)      335.0  ...  46135.0  51347.672314
+1  premium_unleaded_(required)      300.0  ...  40650.0  37624.844742
+2  premium_unleaded_(required)      300.0  ...  36350.0  38191.351828
+3  premium_unleaded_(required)      230.0  ...  29450.0  18789.180171
+4  premium_unleaded_(required)      230.0  ...  34500.0  18789.180171
+
+[5 rows x 14 columns]
