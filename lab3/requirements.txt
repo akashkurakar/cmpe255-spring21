@@ -1,3 +1,4 @@
-kaggle-cli
+scikit-learn
+pandas
+seaborn
 numpy
-sklearn

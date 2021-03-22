@@ -1,107 +1,95 @@
-from sklearn.linear_model import SGDClassifier
-import matplotlib.pyplot as plt
-import matplotlib as mpl
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn import metrics
+import seaborn as sns
 import numpy as np
-import os
-from mlxtend.data import loadlocal_mnist
-import platform
-
-np.random.seed(42)
-# To plot pretty figures
-mpl.rc('axes', labelsize=14)
-mpl.rc('xtick', labelsize=12)
-mpl.rc('ytick', labelsize=12)
-
-# Where to save the figures
-PROJECT_ROOT_DIR = "."
-IMAGE_DIR = "./"
-
-X, y = loadlocal_mnist(
-    images_path='../train-images-idx3-ubyte',
-    labels_path='../train-labels-idx1-ubyte')
-np.savetxt(fname='images.csv',
-           X=X, delimiter=',', fmt='%d')
-np.savetxt(fname='labels.csv',
-           X=y, delimiter=',', fmt='%d')
-
-print(X.shape)
-
-X_train, X_test, y_train, y_test = X[:
-                                     60000], X[60000:], y[:60000], y[60000:]
-shuffle_index = np.random.permutation(60000)
-X_train, y_train = X_train[shuffle_index], y_train[shuffle_index]
-
-# Example: Binary number 4 Classifier
-y_train_4 = (y_train == 4)
-y_test_4 = (y_test == 4)
-sgd_clf = SGDClassifier(random_state=42)  # instantiate
-sgd_clf.fit(X_train, y_train_4)  # train the classifier
+from sklearn.model_selection import RandomizedSearchCV
+from scipy.stats import loguniform
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn import preprocessing
 
 
-def save_fig(fig_id, tight_layout=True):
-    path = "./Foo.png"
-    print("Saving figure", fig_id)
-    if tight_layout:
-        plt.tight_layout()
-    plt.savefig(path, format='png', dpi=300)
+class DiabetesClassifier:
+    def __init__(self) -> None:
+        col_names = ['pregnant', 'glucose', 'bp', 'skin',
+                     'insulin', 'bmi', 'pedigree', 'age', 'label']
+        self.pima = pd.read_csv('diabetes.csv', header=0,
+                                names=col_names, usecols=col_names)
+        print(self.pima.corr().T)
+        self.X_test = None
+        self.y_test = None
 
+    def define_feature(self):
+        # ------Solution 1---------
+        # feature_cols = ['pregnant', 'glucose', 'bmi', 'age']
+        # --------Solution 2 & Solution 3---------
+        # feature_cols = ['pregnant', 'glucose', 'pedigree', 'bmi', 'age']
+        feature_cols = ['pregnant', 'insulin', 'bmi', 'age']
+        X = self.pima[feature_cols]
+        y = self.pima.label
 
-def random_digit():
-    some_digit = X[3652]
-    some_digit_image = some_digit.reshape(28, 28)
-    plt.imshow(some_digit_image, cmap=mpl.cm.binary,
-               interpolation="nearest")
-    plt.axis("off")
+        return X, y
 
-    save_fig(some_digit)
-    plt.show()
+    def train(self):
+        # split X and y into training and testing sets
+        X, y = self.define_feature()
+        X_train, self.X_test, y_train, self.y_test = train_test_split(
+            X, y, random_state=0)
+        # train a logistic regression model on the training set
+        logreg = LogisticRegression(tol=10)
+        # -----------_Solution 3------------
+        #logreg = LogisticRegression(tol=10)
+        # --------Solution 2 ---------
+        # train a logistic regression model on the training set
+        # logreg = LogisticRegression(
+        #    C=0.30971587230022724, penalty='l2', solver='saga', max_iter=5000)
+        # grid_values = {'penalty': ['l1', 'l2'], 'C': [
+        #    0.001, 0.01, 0.1, 1, 10, 100, 1000]}
+        # cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
+        # space = dict()
+        # space['solver'] = ['newton-cg', 'lbfgs', 'liblinear']
+        # space['penalty'] = ['none', 'l1', 'l2', 'elasticnet']
+        # space['C'] = loguniform(1e-5, 100)
+        # search = RandomizedSearchCV(
+        #    logreg, space, n_iter=500, scoring='accuracy', n_jobs=-1, cv=cv, random_state=1)
+        # search.fit(X_train, y_train)
+        # print(clf.best_score_)
+        # model_lr = GridSearchCV(logreg, param_grid=grid_values)
+        # model_lr.fit(X_train, y_train)
+        # print(search.best_params_)
+        # --------Solution 2 & Solution 3 end---------
 
+        logreg.fit(X_train, y_train)
+        return logreg
 
-def load_and_sort():
-    try:
-        from sklearn.datasets import fetch_openml
-        mnist = fetch_openml('../train-images-idx3-ubyte',
-                             version=1, cache=True)
-        # fetch_openml() returns targets as strings
-        mnist.target = mnist.target.astype(np.int8)
-        sort_by_target(mnist)  # fetch_openml() returns an unsorted dataset
-    except ImportError:
-        from sklearn.datasets import fetch_mldata
-        mnist = fetch_mldata('MNIST original')
-    print(mnist["data"]), print(mnist["target"])
+    def predict(self):
+        model = self.train()
+        y_pred_class = model.predict(self.X_test)
+        return y_pred_class
 
+    def calculate_accuracy(self, result):
+        return metrics.accuracy_score(self.y_test, result)
 
-def sort_by_target(mnist):
-    reorder_train = np.array(
-        sorted([(target, i) for i, target in enumerate(mnist.target[:60000])]))[:, 1]
-    reorder_test = np.array(
-        sorted([(target, i) for i, target in enumerate(mnist.target[60000:])]))[:, 1]
-    mnist.data[:60000] = mnist.data[reorder_train]
-    mnist.target[:60000] = mnist.target[reorder_train]
-    mnist.data[60000:] = mnist.data[reorder_test + 60000]
-    mnist.target[60000:] = mnist.target[reorder_test + 60000]
+    def examine(self):
+        dist = self.y_test.value_counts()
+        print(dist)
+        percent_of_ones = self.y_test.mean()
+        percent_of_zeros = 1 - self.y_test.mean()
+        return self.y_test.mean()
 
-
-def train_predict(some_digit):
-
-    # TODO
-    # print prediction result of the given input some_digit
-
-    #some_digit = X[3652]
-    print(sgd_clf.predict([some_digit]))  # make it predict some digit
-
-
-def calculate_cross_val_score():
-    # TODO
-    from sklearn.model_selection import cross_val_score
-    print(cross_val_score(sgd_clf, X_train, y_train_4, cv=3, scoring="accuracy"))
-
-
-def test() -> None:
-    random_digit()
-    train_predict(X[3652])
-    calculate_cross_val_score()
+    def confusion_matrix(self, result):
+        return metrics.confusion_matrix(self.y_test, result)
 
 
 if __name__ == "__main__":
-    test()
+    classifer = DiabetesClassifier()
+    result = classifer.predict()
+    print(f"Predicition={result}")
+    score = classifer.calculate_accuracy(result)
+    print(f"score={score}")
+    con_matrix = classifer.confusion_matrix(result)
+    print(f"confusion_matrix=${con_matrix}")
