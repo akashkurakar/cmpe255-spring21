@@ -1,0 +1,38 @@
+The Lineat model performance for training set
+--------------------------------------
+RMSE is 6.557180458295626
+R2 score is 0.51
+
+
+The Linear model performance for test set
+--------------------------------------
+Root Mean Squared Error: 6.792994578778734
+R^2: 0.37
+
+
+506
+0    6.575
+1    6.421
+2    7.185
+3    6.998
+4    7.147
+Name: RM, dtype: float64
+The Polynomial model performance
+--------------------------------------
+Root Mean Squared Error: 6.174277873763028
+R^2: 0.5484256373971057
+0    6.575
+1    6.421
+2    7.185
+3    6.998
+4    7.147
+Name: RM, dtype: float64
+The Polynomial model performance
+--------------------------------------
+Root Mean Squared Error: 5.798886157518814
+R^2: 0.6016671705113272
+The Multiple model performance 
+--------------------------------------
+Root Mean Squared Error: 5.207202455789536
+R^2: 0.63
+Adjusted R^2: 0.627788844621514
